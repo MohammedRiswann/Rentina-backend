@@ -14,8 +14,9 @@ router.post(
   validatePhone,
   validateInput,
 
-  userController.userSignUp
+  userController.Verification
 );
-router.post("/verify-otp", userController.userSuccess);
+router.post("/verify-otp", userController.Register);
+router.post("/user-login", userController.Login);
 
 module.exports = router;
