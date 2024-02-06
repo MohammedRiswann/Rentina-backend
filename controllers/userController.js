@@ -93,13 +93,15 @@ const userController = {
       );
 
       if (!passwordMatch) {
-        return response
-          .status(402)
-          .json({ success: false, message: "Incorrect password" });
+        return response.status(402).json({
+          success: false,
+          message: "Incorrect password",
+        });
       }
       const token = JWT.sign({ userId: existingUser._id }, jwtSecret, {
         expiresIn: "1hr",
       });
+      console.log(token);
       response.status(200).json({ success: true, token, user: existingUser });
     } catch (error) {
       response.status(400).json({ success: false, message: "Error occured" });
