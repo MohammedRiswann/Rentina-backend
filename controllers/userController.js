@@ -30,7 +30,7 @@ const userController = {
           .verifications.create({ to: `+91${phone}`, channel: "sms" });
 
         console.log(verification.status);
-        response.json({ success: true });
+        response.json({ success: true, type: "user" });
       }
     } catch (error) {
       console.log(error);
@@ -64,8 +64,11 @@ const userController = {
         const token = JWT.sign({ userId: savedUser }, jwtSecret, {
           expiresIn: "1hr",
         });
+
         console.log(token);
-        response.status(200).json({ user: savedUser, success: true });
+        response
+          .status(200)
+          .json({ user: savedUser, success: true, token, type: "user" });
       } else {
         response
           .status(400)
@@ -106,7 +109,9 @@ const userController = {
         expiresIn: "1hr",
       });
       console.log(token);
-      response.status(200).json({ success: true, token, user: existingUser });
+      response
+        .status(200)
+        .json({ success: true, token, user: existingUser, type: "user" });
     } catch (error) {
       response.status(400).json({ success: false, message: "Error occured" });
     }

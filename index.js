@@ -22,7 +22,7 @@ app.use(bodyParser.json());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use("/users", userRoutes);
-app.use("/seller", sellerRoutes);
+app.use("/sellers", sellerRoutes);
 
 app.listen(port, () => {
   console.log(`server started succesfully in port ${port}`);

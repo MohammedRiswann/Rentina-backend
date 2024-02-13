@@ -33,7 +33,7 @@ const sellerController = {
           .verifications.create({ to: `+91${phone}`, channel: "sms" });
 
         console.log(verification.status);
-        response.json({ success: true });
+        response.json({ success: true, type: "seller" });
       }
     } catch (error) {
       console.log(error);
@@ -54,6 +54,7 @@ const sellerController = {
       console.log(verification_check.status);
 
       if (verification_check.status === "approved") {
+        console.log("entered");
         const newUser = new seller({
           firstName,
           lastName,
@@ -66,8 +67,10 @@ const sellerController = {
         const token = JWT.sign({ userId: savedUser }, jwtSecret, {
           expiresIn: "1hr",
         });
-        console.log(token);
-        response.status(200).json({ user: savedUser, success: true });
+
+        response
+          .status(200)
+          .json({ user: savedUser, success: true, type: "seller", token });
       } else {
         response
           .status(400)

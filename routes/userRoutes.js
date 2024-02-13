@@ -9,10 +9,6 @@ const validateInput = require("../validation/validateInoput");
 
 router.post(
   "/signup",
-  validateSignup,
-  confirmPassword,
-  validatePhone,
-  validateInput,
 
   userController.Verification
 );

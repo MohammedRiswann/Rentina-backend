@@ -7,8 +7,7 @@ const sellerSchema = new mongoose.Schema({
   phone: Number,
   password: String,
   otp: Number,
-  photoUrl: String,
 });
 
-const seller = mongoose.model("Seller", sellerSchema);
+const seller = mongoose.model("sellers", sellerSchema);
 module.exports = seller;
