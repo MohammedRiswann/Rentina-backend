@@ -6,7 +6,7 @@ function phoneValidation(request, response, next) {
 
   if (!validPhone) {
     response
-      .ststus(400)
+      .status(400)
       .json({ success: false, message: "wrong phone number" });
   } else if (validPhone) {
     next();

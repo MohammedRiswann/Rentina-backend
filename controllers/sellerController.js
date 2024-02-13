@@ -1,8 +1,9 @@
 const Twilio = require("twilio");
-const user = require("../models/user");
+const seller = require("../models/seller");
 require("dotenv").config();
 const JWT = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
+const AWS = require("aws-sdk");
 
 const otpSID = process.env.TWILIO_ACCOUNT_SID;
 const token = process.env.TWILIO_AUTH_TOKEN;
@@ -10,12 +11,14 @@ const serviceId = process.env.SERVICE_ID;
 const jwtSecret = process.env.JWT_SECRET;
 
 const twilio = Twilio(otpSID, token);
-
-// This is the signup of the user
-const userController = {
+const sellerController = {
   Verification: async (request, response) => {
+    console.log("-----------worked first-------------");
+    console.log(request.body);
     const { firstName, lastName, email, phone, password } = request.body;
-    const existingUser = await user.findOne({ phone });
+    console.log(firstName);
+    console.log(phone);
+    const existingUser = await seller.findOne({ phone });
 
     // OTP verification
     try {
@@ -24,7 +27,7 @@ const userController = {
           .status(400)
           .json({ message: `User with this ${phone} already exists! ` });
       } else {
-        console.log("hello");
+        console.log("-------else part---------");
         const verification = await twilio.verify.v2
           .services(serviceId)
           .verifications.create({ to: `+91${phone}`, channel: "sms" });
@@ -37,8 +40,7 @@ const userController = {
       response.json({ success: false });
     }
   },
-
-  Register: async (request, response) => {
+  sellerRegister: async (request, response) => {
     const { firstName, lastName, email, phone, password, otp } = request.body;
     console.log(firstName);
 
@@ -52,7 +54,7 @@ const userController = {
       console.log(verification_check.status);
 
       if (verification_check.status === "approved") {
-        const newUser = new user({
+        const newUser = new seller({
           firstName,
           lastName,
           email,
@@ -79,38 +81,6 @@ const userController = {
         .json({ success: false, message: "Internal server error" });
     }
   },
-  Login: async (request, response) => {
-    const { phone, password } = request.body;
-
-    try {
-      const existingUser = await user.findOne({ phone });
-
-      if (!existingUser) {
-        return response
-          .status(404)
-          .json({ success: false, message: "User not found" });
-      }
-
-      const passwordMatch = await bcrypt.compare(
-        password,
-        existingUser.password
-      );
-
-      if (!passwordMatch) {
-        return response.status(402).json({
-          success: false,
-          message: "Incorrect password",
-        });
-      }
-      const token = JWT.sign({ userId: existingUser._id }, jwtSecret, {
-        expiresIn: "1hr",
-      });
-      console.log(token);
-      response.status(200).json({ success: true, token, user: existingUser });
-    } catch (error) {
-      response.status(400).json({ success: false, message: "Error occured" });
-    }
-  },
 };
 
-module.exports = userController;
+module.exports = sellerController;
