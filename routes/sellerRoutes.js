@@ -5,11 +5,14 @@ const validateSignup = require("../validation/passwordValidation");
 const confirmPassword = require("../validation/confirmpassword");
 const validatePhone = require("../validation/phoneValidation");
 const validateInput = require("../validation/validateInoput");
+const multer = require("../middleware/multer");
 
+router.post("/register", sellerController.Verification);
 router.post(
-  "/register",
-
-  sellerController.Verification
+  "/verify-otp",
+  multer.single("file"),
+  sellerController.sellerRegister
 );
-router.post("/verify-otp", sellerController.sellerRegister);
+router.post("/seller-login", sellerController.Login);
+
 module.exports = router;

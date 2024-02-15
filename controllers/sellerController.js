@@ -3,7 +3,6 @@ const seller = require("../models/seller");
 require("dotenv").config();
 const JWT = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
-const AWS = require("aws-sdk");
 
 const otpSID = process.env.TWILIO_ACCOUNT_SID;
 const token = process.env.TWILIO_AUTH_TOKEN;
@@ -71,7 +70,7 @@ const sellerController = {
         response
           .status(200)
           .json({ user: savedUser, success: true, type: "seller", token });
-      } else {
+        //   } else {
         response
           .status(400)
           .json({ success: false, message: "OTP verification failed" });
@@ -82,6 +81,40 @@ const sellerController = {
       response
         .status(500)
         .json({ success: false, message: "Internal server error" });
+    }
+  },
+  Login: async (request, response) => {
+    const { phone, password } = request.body;
+
+    try {
+      const existingUser = await seller.findOne({ phone });
+
+      if (!existingUser) {
+        return response
+          .status(404)
+          .json({ success: false, message: "User not found" });
+      }
+
+      const passwordMatch = await bcrypt.compare(
+        password,
+        existingUser.password
+      );
+
+      if (!passwordMatch) {
+        return response.status(402).json({
+          success: false,
+          message: "Incorrect password",
+        });
+      }
+      const token = JWT.sign({ userId: existingUser._id }, jwtSecret, {
+        expiresIn: "1hr",
+      });
+      console.log(token);
+      response
+        .status(200)
+        .json({ success: true, token, seller: existingUser, type: "seller" });
+    } catch (error) {
+      response.status(400).json({ success: false, message: "Error occured" });
     }
   },
 };
