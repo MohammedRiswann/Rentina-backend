@@ -7,12 +7,13 @@ const validatePhone = require("../validation/phoneValidation");
 const validateInput = require("../validation/validateInoput");
 const multer = require("../middleware/multer");
 
-router.post("/register", sellerController.Verification);
-router.post(
-  "/verify-otp",
-  multer.single("file"),
-  sellerController.sellerRegister
-);
+router.post("/register", multer.single("files"), sellerController.Verification);
+router.post("/verify-otp", sellerController.sellerRegister);
 router.post("/seller-login", sellerController.Login);
+router.post(
+  "/add-products",
+  multer.array("files", 7),
+  sellerController.addProducts
+);
 
 module.exports = router;

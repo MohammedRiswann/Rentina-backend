@@ -1,4 +1,5 @@
 const { default: mongoose, Mongoose } = require("mongoose");
+const { any } = require("../middleware/multer");
 
 const sellerSchema = new mongoose.Schema({
   firstName: String,
@@ -7,6 +8,8 @@ const sellerSchema = new mongoose.Schema({
   phone: Number,
   password: String,
   otp: Number,
+  profileImage: String,
+  isVerified: Boolean,
 });
 
 const seller = mongoose.model("sellers", sellerSchema);

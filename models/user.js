@@ -7,6 +7,7 @@ const userSchema = new mongoose.Schema({
   phone: Number,
   password: String,
   otp: Number,
+  isVerified: Boolean,
 });
 
 const user = mongoose.model("User", userSchema);
