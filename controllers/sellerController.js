@@ -3,7 +3,10 @@ const seller = require("../models/seller");
 require("dotenv").config();
 const JWT = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
-const Products = require("../models/products");
+const Products = require("../models/apartments");
+const Lands = require("../models/lands");
+const { findByIdAndDelete } = require("../models/user");
+const products = require("../models/apartments");
 
 const otpSID = process.env.TWILIO_ACCOUNT_SID;
 const token = process.env.TWILIO_AUTH_TOKEN;
@@ -167,7 +170,8 @@ const sellerController = {
   },
   addProducts: async (request, response) => {
     try {
-      const { name, price } = request.body;
+      const { name, price, description, features, type, location, role } =
+        request.body;
       console.log(request.body);
       let productUrl = [];
       console.log(request.files);
@@ -181,11 +185,94 @@ const sellerController = {
         console.log(productUrl);
       }
 
-      const products = new Products({ name, price, images: productUrl });
+      const products = new Products({
+        name,
+        price,
+        images: productUrl,
+        description,
+        features,
+        type,
+        location,
+        role,
+      });
       await products.save();
       response.status(201).json({ message: "Product added successfully" });
     } catch (error) {
       console.error("Error adding product:", error);
+      response.status(500).json({ error: "Internal server error" });
+    }
+  },
+  addLands: async (request, response) => {
+    try {
+      const { name, price } = request.body;
+      console.log(request.body);
+      let landUrl = [];
+      console.log(request.files);
+
+      if (request.files) {
+        console.log("hey");
+        const url = request.files.forEach((m) => {
+          console.log(m.location);
+          landUrl.push(m.location);
+        });
+        console.log(landUrl);
+      }
+
+      const lands = new Lands({
+        name,
+        price,
+        images: productUrl,
+        description,
+        features,
+        type,
+        location,
+        role,
+      });
+      await lands.save();
+      response.status(201).json({ message: "Product added successfully" });
+    } catch (error) {
+      console.error("Error adding product:", error);
+      response.status(500).json({ error: "Internal server error" });
+    }
+  },
+  getAllApartments: async (request, response) => {
+    try {
+      const list = await Products.find().select("_id name price location");
+      if (!list) {
+        console.log(error);
+      } else {
+        response.status(200).json(list);
+      }
+    } catch (error) {
+      console.error("Error retrieving apartments:", error);
+      response.status(500).json({ error: "Internal server error" });
+    }
+  },
+
+  deleteApartment: async (request, response) => {
+    const id = request.params.id;
+    console.log(id);
+
+    try {
+      await products.findByIdAndDelete(id);
+      response.status(200).json("Successfully deleted");
+    } catch (error) {
+      console.error("Error deleting apartment:", error);
+      response.status(500).json({ error: "Internal server error" });
+    }
+  },
+  getProductDetails: async (request, response) => {
+    console.log("hel");
+    const id = request.params.id;
+    console.log(id);
+    try {
+      const product = await Products.findById(id);
+      if (!product) {
+        return response.status(404).json({ error: "Product not found" });
+      }
+      response.status(200).json(product);
+    } catch (error) {
+      console.error("Error retrieving product details:", error);
       response.status(500).json({ error: "Internal server error" });
     }
   },

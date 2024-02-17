@@ -7,6 +7,11 @@ const productsSchema = new mongoose.Schema({
   images: {
     type: [String],
   },
+  description: String,
+  features: String,
+  type: String,
+  location: String,
+  role: String,
 });
 
 const products = mongoose.model("products", productsSchema);

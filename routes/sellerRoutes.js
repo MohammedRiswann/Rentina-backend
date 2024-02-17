@@ -15,5 +15,12 @@ router.post(
   multer.array("files", 7),
   sellerController.addProducts
 );
-
+router.post(
+  "/add-lands",
+  multer.array("files", 7),
+  sellerController.addProducts
+);
+router.get("/apartments-list", sellerController.getAllApartments);
+router.delete("/apartments-list/:id", sellerController.deleteApartment);
+router.get("/apartments-list/:id", sellerController.getProductDetails);
 module.exports = router;

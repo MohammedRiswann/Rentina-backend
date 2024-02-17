@@ -20,9 +20,9 @@ const userController = {
     // OTP verification
     try {
       if (existingUser) {
-        response
-          .status(400)
-          .json({ message: `User with this ${phone} already exists! ` });
+        response.status(400).json({
+          message: `User with this ${phone} already exists!`,
+        });
       } else {
         console.log("hello");
         const verification = await twilio.verify.v2
