@@ -6,6 +6,11 @@ const confirmPassword = require("../validation/confirmpassword");
 const validatePhone = require("../validation/phoneValidation");
 const validateInput = require("../validation/validateInoput");
 const multer = require("../middleware/multer");
+const decode = require("../middleware/decodeJwt");
+
+router.get("/apartments-list", sellerController.getAllApartments);
+router.get("/apartments-list/:id", sellerController.getProductDetails);
+router.get("/profile", decode, sellerController.getProfile);
 
 router.post("/register", multer.single("files"), sellerController.Verification);
 router.post("/verify-otp", sellerController.sellerRegister);
@@ -20,7 +25,9 @@ router.post(
   multer.array("files", 7),
   sellerController.addProducts
 );
-router.get("/apartments-list", sellerController.getAllApartments);
+router.post("/add-profile", decode, sellerController.addProfile);
+
 router.delete("/apartments-list/:id", sellerController.deleteApartment);
-router.get("/apartments-list/:id", sellerController.getProductDetails);
+router.put("properties/:id", sellerController.updateProperty);
+
 module.exports = router;

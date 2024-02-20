@@ -7,6 +7,8 @@ const Products = require("../models/apartments");
 const Lands = require("../models/lands");
 const { findByIdAndDelete } = require("../models/user");
 const products = require("../models/apartments");
+const profile = require("../models/seller-profile");
+const { default: mongoose } = require("mongoose");
 
 const otpSID = process.env.TWILIO_ACCOUNT_SID;
 const token = process.env.TWILIO_AUTH_TOKEN;
@@ -72,11 +74,17 @@ const sellerController = {
         });
       }
 
-      // User created successfully, return success response
+      // Generate JWT token
+      const token = JWT.sign({ userId: savedUser._id }, jwtSecret, {
+        expiresIn: "1hr",
+      });
+
+      // User created successfully, return success response with JWT token
       return response.status(200).json({
         success: true,
         message: "User created successfully and verification code sent",
         user: savedUser,
+        token: token,
       });
     } catch (error) {
       console.log(error, "error caught");
@@ -108,16 +116,17 @@ const sellerController = {
         existingUser.isVerified = true;
         const savedUser = await existingUser.save();
 
+        // Generate JWT token
+        const token = JWT.sign({ userId: existingUser._id }, jwtSecret, {
+          expiresIn: "1hr",
+        });
+
         // return response.status(200).json({
         //   success: true,
         //   message: "OTP verification successful",
         // });
 
-        // const savedUser = await newUser.save();
-        const token = JWT.sign({ userId: savedUser }, jwtSecret, {
-          expiresIn: "1hr",
-        });
-
+        // Return success response with JWT token
         return response
           .status(200)
           .json({ user: savedUser, success: true, type: "seller", token });
@@ -136,7 +145,7 @@ const sellerController = {
   },
   Login: async (request, response) => {
     const { phone, password } = request.body;
-
+    console.log(password);
     try {
       const existingUser = await seller.findOne({ phone });
 
@@ -157,17 +166,22 @@ const sellerController = {
           message: "Incorrect password",
         });
       }
+
+      // Generate JWT token
       const token = JWT.sign({ userId: existingUser._id }, jwtSecret, {
         expiresIn: "1hr",
       });
-      console.log(token);
+      console.log("hello");
+      // Return success response with JWT token
       response
+
         .status(200)
         .json({ success: true, token, seller: existingUser, type: "seller" });
     } catch (error) {
-      response.status(400).json({ success: false, message: "Error occured" });
+      response.status(400).json({ success: false, message: "Error occurred" });
     }
   },
+
   addProducts: async (request, response) => {
     try {
       const { name, price, description, features, type, location, role } =
@@ -274,6 +288,92 @@ const sellerController = {
     } catch (error) {
       console.error("Error retrieving product details:", error);
       response.status(500).json({ error: "Internal server error" });
+    }
+  },
+  updateProperty: async (request, response) => {
+    const { id } = req.params;
+    const updatedDetails = req.body;
+
+    try {
+      // Find the property by ID and update its details
+      const property = await Property.findByIdAndUpdate(id, updatedDetails, {
+        new: true,
+      });
+
+      if (!property) {
+        return res.status(404).json({ message: "Property not found" });
+      }
+
+      res.json({ message: "Property details updated successfully", property });
+    } catch (error) {
+      console.error("Error updating property details:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  },
+  getProfile: async (request, response) => {
+    console.log(request.token.userId);
+    const userId = new mongoose.Types.ObjectId(request.token.userId);
+    const sellers = await seller.aggregate([
+      {
+        $match: {
+          _id: userId,
+        },
+      },
+      {
+        $lookup: {
+          from: "sellerprofiles",
+          localField: "_id",
+          foreignField: "userId",
+          as: "profile",
+        },
+      },
+    ]);
+    // console.log(sellers[0].profile);
+
+    response.json(sellers);
+  },
+
+  addProfile: async (request, response) => {
+    console.log(request.body, "fhdsh");
+
+    try {
+      // Assuming request.body contains the data for the new profile
+      const { firstName, lastName, email, phone, country, state } =
+        request.body;
+      userId = request.token.userId;
+      await profile.updateOne(
+        {
+          userId: userId,
+        },
+        {
+          $set: {
+            country,
+            state,
+          },
+        },
+        {
+          upsert: true,
+        }
+      );
+      await seller.updateOne(
+        {
+          _id: userId,
+        },
+        {
+          $set: {
+            firstName,
+            lastName,
+            email,
+            phone,
+          },
+        }
+      );
+
+      response.status(201).json({ message: "Profile added successfully" });
+    } catch (error) {
+      // If there's an error, respond with an error message
+      console.error("Error adding profile:", error);
+      response.status(500).json({ error: "Failed to add profile" });
     }
   },
 };
