@@ -6,6 +6,7 @@ const bodyParser = require("body-parser");
 const port = 2000;
 const userRoutes = require("./routes/userRoutes");
 const sellerRoutes = require("./routes/sellerRoutes");
+const adminRoutes = require("./routes/adminRoutes");
 
 mongoose
   .connect("mongodb://localhost:27017/Rentina")
@@ -23,6 +24,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use("/users", userRoutes);
 app.use("/sellers", sellerRoutes);
+app.use("/admin", adminRoutes);
 
 app.listen(port, () => {
   console.log(`server started succesfully in port ${port}`);

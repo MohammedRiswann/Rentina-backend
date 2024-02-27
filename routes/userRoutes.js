@@ -7,6 +7,8 @@ const confirmPassword = require("../validation/confirmpassword");
 const validatePhone = require("../validation/phoneValidation");
 const validateInput = require("../validation/validateInoput");
 
+router.get("/search/apartments", userController.propertyList);
+
 router.post(
   "/signup",
 

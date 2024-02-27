@@ -9,6 +9,7 @@ const { findByIdAndDelete } = require("../models/user");
 const products = require("../models/apartments");
 const profile = require("../models/seller-profile");
 const { default: mongoose } = require("mongoose");
+const lands = require("../models/lands");
 
 const otpSID = process.env.TWILIO_ACCOUNT_SID;
 const token = process.env.TWILIO_AUTH_TOKEN;
@@ -219,12 +220,10 @@ const sellerController = {
   addLands: async (request, response) => {
     try {
       const { name, price } = request.body;
-      console.log(request.body);
       let landUrl = [];
-      console.log(request.files);
 
       if (request.files) {
-        console.log("hey");
+        console.log("heylooo");
         const url = request.files.forEach((m) => {
           console.log(m.location);
           landUrl.push(m.location);
@@ -235,12 +234,7 @@ const sellerController = {
       const lands = new Lands({
         name,
         price,
-        images: productUrl,
-        description,
-        features,
-        type,
-        location,
-        role,
+        images: landUrl,
       });
       await lands.save();
       response.status(201).json({ message: "Product added successfully" });
@@ -301,13 +295,26 @@ const sellerController = {
       });
 
       if (!property) {
-        return res.status(404).json({ message: "Property not found" });
+        return response.status(404).json({ message: "Property not found" });
       }
 
       res.json({ message: "Property details updated successfully", property });
     } catch (error) {
       console.error("Error updating property details:", error);
-      res.status(500).json({ message: "Internal server error" });
+      response.status(500).json({ message: "Internal server error" });
+    }
+  },
+  getAllLands: async (request, response) => {
+    try {
+      const list = await lands.find().select("_id name price location");
+      if (!list) {
+        console.log(error);
+      } else {
+        response.status(200).json(list);
+      }
+    } catch (error) {
+      console.error("Error retrieving apartments:", error);
+      response.status(500).json({ error: "Internal server error" });
     }
   },
   getProfile: async (request, response) => {

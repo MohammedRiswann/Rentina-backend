@@ -8,6 +8,10 @@ const userSchema = new mongoose.Schema({
   password: String,
   otp: Number,
   isVerified: Boolean,
+  isAdmin: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const user = mongoose.model("User", userSchema);

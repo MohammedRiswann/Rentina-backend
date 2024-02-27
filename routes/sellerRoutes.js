@@ -11,6 +11,7 @@ const decode = require("../middleware/decodeJwt");
 router.get("/apartments-list", sellerController.getAllApartments);
 router.get("/apartments-list/:id", sellerController.getProductDetails);
 router.get("/profile", decode, sellerController.getProfile);
+router.get("/lands-list", sellerController.getAllLands);
 
 router.post("/register", multer.single("files"), sellerController.Verification);
 router.post("/verify-otp", sellerController.sellerRegister);
@@ -20,11 +21,7 @@ router.post(
   multer.array("files", 7),
   sellerController.addProducts
 );
-router.post(
-  "/add-lands",
-  multer.array("files", 7),
-  sellerController.addProducts
-);
+router.post("/add-lands", multer.array("files", 7), sellerController.addLands);
 router.post("/add-profile", decode, sellerController.addProfile);
 
 router.delete("/apartments-list/:id", sellerController.deleteApartment);

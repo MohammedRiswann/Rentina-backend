@@ -3,7 +3,7 @@ const user = require("../models/user");
 require("dotenv").config();
 const JWT = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
-
+const Apartment = require("../models/apartments");
 const otpSID = process.env.TWILIO_ACCOUNT_SID;
 const token = process.env.TWILIO_AUTH_TOKEN;
 const serviceId = process.env.SERVICE_ID;
@@ -58,6 +58,7 @@ const userController = {
           email,
           phone,
           password: hashed,
+          isAdmin,
         });
 
         const savedUser = await newUser.save();
@@ -84,9 +85,11 @@ const userController = {
   },
   Login: async (request, response) => {
     const { phone, password } = request.body;
+    console.log(phone);
 
     try {
       const existingUser = await user.findOne({ phone });
+      console.log(existingUser);
 
       if (!existingUser) {
         return response
@@ -99,10 +102,20 @@ const userController = {
         existingUser.password
       );
 
+      console.log(passwordMatch);
+
       if (!passwordMatch) {
         return response.status(402).json({
           success: false,
           message: "Incorrect password",
+        });
+      }
+      if (existingUser.isAdmin) {
+        // Redirect to homepage for admin
+        return response.status(200).json({
+          success: true,
+          message: "Redirect to homepage",
+          isAdmin: true,
         });
       }
       const token = JWT.sign({ userId: existingUser._id }, jwtSecret, {
@@ -114,6 +127,42 @@ const userController = {
         .json({ success: true, token, user: existingUser, type: "user" });
     } catch (error) {
       response.status(400).json({ success: false, message: "Error occured" });
+    }
+  },
+
+  propertyList: async (request, response) => {
+    try {
+      const { query, location, minPrice, maxPrice, type } = request.query;
+
+      let apartmentsQuery = {};
+
+      if (query) {
+        apartmentsQuery.$or = [
+          { name: { $regex: new RegExp(query, "i") } },
+          { location: { $regex: new RegExp(query, "i") } },
+        ];
+      }
+      if (location) {
+        apartmentsQuery.location = { $regex: new RegExp(location, "i") };
+      }
+      if (minPrice && !maxPrice) {
+        apartmentsQuery.price = { $gte: minPrice };
+      } else if (!minPrice && maxPrice) {
+        apartmentsQuery.price = { $lte: maxPrice };
+      } else if (minPrice && maxPrice) {
+        apartmentsQuery.price = { $gte: minPrice, $lte: maxPrice };
+      }
+
+      if (type) {
+        apartmentsQuery.type = type.toLowerCase(); // Assuming type is stored in lowercase
+      }
+
+      const apartments = await Apartment.find(apartmentsQuery);
+
+      response.json(apartments);
+    } catch (error) {
+      console.error(error);
+      response.status(500).json({ message: "Internal server error" });
     }
   },
 };

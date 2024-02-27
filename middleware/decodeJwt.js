@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken");
-
+console.log("hello");
 const decodeSellerId = (request, response, next) => {
   try {
     const token = request.headers.authorization.split(" ")[1];
