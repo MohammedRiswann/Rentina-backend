@@ -8,12 +8,9 @@ const validatePhone = require("../validation/phoneValidation");
 const validateInput = require("../validation/validateInoput");
 
 router.get("/search/apartments", userController.propertyList);
+router.get("/apartment-details/:userId", userController.apartmentDetails);
 
-router.post(
-  "/signup",
-
-  userController.Verification
-);
+router.post("/signup", validateSignup, userController.Verification);
 router.post("/verify-otp", userController.Register);
 router.post("/user-login", userController.Login);
 

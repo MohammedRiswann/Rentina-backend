@@ -58,7 +58,9 @@ const userController = {
           email,
           phone,
           password: hashed,
-          isAdmin,
+          isVerified: false,
+          isAdmin: false,
+          isBlocked: false,
         });
 
         const savedUser = await newUser.save();
@@ -66,7 +68,6 @@ const userController = {
           expiresIn: "1hr",
         });
 
-        console.log(token);
         response
           .status(200)
           .json({ user: savedUser, success: true, token, type: "user" });
@@ -85,11 +86,9 @@ const userController = {
   },
   Login: async (request, response) => {
     const { phone, password } = request.body;
-    console.log(phone);
 
     try {
       const existingUser = await user.findOne({ phone });
-      console.log(existingUser);
 
       if (!existingUser) {
         return response
@@ -101,8 +100,6 @@ const userController = {
         password,
         existingUser.password
       );
-
-      console.log(passwordMatch);
 
       if (!passwordMatch) {
         return response.status(402).json({
@@ -116,12 +113,19 @@ const userController = {
           success: true,
           message: "Redirect to homepage",
           isAdmin: true,
+          type: "admin",
+        });
+      }
+      if (existingUser.isBlocked) {
+        return response.status(401).json({
+          success: false,
+          message: "You are blocked  ! Contact the ADMIN",
         });
       }
       const token = JWT.sign({ userId: existingUser._id }, jwtSecret, {
         expiresIn: "1hr",
       });
-      console.log(token);
+
       response
         .status(200)
         .json({ success: true, token, user: existingUser, type: "user" });
@@ -163,6 +167,16 @@ const userController = {
     } catch (error) {
       console.error(error);
       response.status(500).json({ message: "Internal server error" });
+    }
+  },
+  apartmentDetails: async (request, response) => {
+    try {
+      const apartmentId = request.params.userId;
+      console.log(apartmentId);
+      const apartmentDetails = await Apartment.findById(apartmentId);
+      response.json(apartmentDetails);
+    } catch (error) {
+      console.log(error);
     }
   },
 };

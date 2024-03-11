@@ -9,7 +9,8 @@ const sellerSchema = new mongoose.Schema({
   password: String,
   otp: Number,
   profileImage: String,
-  isVerified: Boolean,
+  isVerified: { type: Boolean, default: false },
+  isBlocked: { type: Boolean, default: false },
 });
 
 const seller = mongoose.model("sellers", sellerSchema);

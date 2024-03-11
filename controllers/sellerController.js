@@ -19,18 +19,15 @@ const jwtSecret = process.env.JWT_SECRET;
 const twilio = Twilio(otpSID, token);
 const sellerController = {
   Verification: async (request, response) => {
-    console.log("-----------worked first-------------");
-    console.log(request.body);
     const { firstName, lastName, email, phone, password } = request.body;
-    console.log(request.file);
 
     try {
       // Check if user already exists
       const existingUser = await seller.findOne({ phone });
+      console.log("hello back");
 
       if (existingUser) {
-        console.log("ex");
-        // User already exists, return error response
+        // User already exists
         return response.status(400).json({
           success: false,
           message: `User with this ${phone} already exists!`,
@@ -38,34 +35,15 @@ const sellerController = {
       }
 
       let fileUrl = "";
-      console.log("hello");
 
       if (request.file && request.file.location) {
-        console.log("hey");
-        fileUrl = request.file.location; // Assign the file location to fileURL
-        console.log(fileUrl);
+        fileUrl = request.file.location;
       }
-
-      // Create a new user instance
-      const newUser = new seller({
-        firstName,
-        lastName,
-        email,
-        phone,
-        password,
-        isVerified: false,
-        profileImage: fileUrl,
-      });
-
-      // Save the new user to the database
-      const savedUser = await newUser.save();
 
       // Send OTP verification
       const verification = await twilio.verify.v2
         .services(serviceId)
         .verifications.create({ to: `+91${phone}`, channel: "sms" });
-
-      console.log("verification", verification.status);
 
       if (!verification) {
         // If OTP sending failed, return error response
@@ -76,15 +54,18 @@ const sellerController = {
       }
 
       // Generate JWT token
-      const token = JWT.sign({ userId: savedUser._id }, jwtSecret, {
-        expiresIn: "1hr",
-      });
+      const token = JWT.sign(
+        { firstName, lastName, email, phone, password, fileUrl },
+        jwtSecret,
+        {
+          expiresIn: "1hr",
+        }
+      );
 
       // User created successfully, return success response with JWT token
       return response.status(200).json({
         success: true,
         message: "User created successfully and verification code sent",
-        user: savedUser,
         token: token,
       });
     } catch (error) {
@@ -97,40 +78,45 @@ const sellerController = {
   },
 
   sellerRegister: async (request, response) => {
-    console.log("entered to seller regisyter");
-    const { phone, otp } = request.body;
-    console.log(phone);
-
     try {
-      const existingUser = await seller.findOne({ phone });
-
+      const { firstName, lastName, email, password, fileUrl, phone } =
+        request.token;
+      const { otp } = request.body;
+      const hashed = await bcrypt.hash(password, 10);
       const verification_check = await twilio.verify.v2
         .services(serviceId)
         .verificationChecks.create({ to: `+91${phone}`, code: otp });
 
-      console.log(verification_check.status);
-
       if (verification_check.status === "approved") {
         console.log("entered");
 
-        // Update the user's isVerified field to true
-        existingUser.isVerified = true;
-        const savedUser = await existingUser.save();
+        // Create a new seller instance
+        const newSeller = new seller({
+          firstName,
+          lastName,
+          email,
+          phone,
+          password: hashed,
+          profileImage: fileUrl,
+          isVerified: false,
+          isBlocked: false,
+        });
+
+        // Save the new seller to the database
+        const savedSeller = await newSeller.save();
 
         // Generate JWT token
-        const token = JWT.sign({ userId: existingUser._id }, jwtSecret, {
+        const token = JWT.sign({ userId: savedSeller._id }, jwtSecret, {
           expiresIn: "1hr",
         });
 
-        // return response.status(200).json({
-        //   success: true,
-        //   message: "OTP verification successful",
-        // });
-
-        // Return success response with JWT token
-        return response
-          .status(200)
-          .json({ user: savedUser, success: true, type: "seller", token });
+        return response.status(200).json({
+          success: true,
+          message: "Seller registration successful",
+          token: token,
+          seller: savedSeller,
+          type: "seller",
+        });
       } else {
         response
           .status(400)
@@ -146,7 +132,7 @@ const sellerController = {
   },
   Login: async (request, response) => {
     const { phone, password } = request.body;
-    console.log(password);
+
     try {
       const existingUser = await seller.findOne({ phone });
 
@@ -155,7 +141,6 @@ const sellerController = {
           .status(404)
           .json({ success: false, message: "User not found" });
       }
-
       const passwordMatch = await bcrypt.compare(
         password,
         existingUser.password
@@ -167,15 +152,26 @@ const sellerController = {
           message: "Incorrect password",
         });
       }
+      if (!existingUser.isVerified) {
+        return response.status(401).json({
+          success: false,
+          message: "Seller is not verified, Contact Admin!",
+        });
+      }
+      if (existingUser.isBlocked) {
+        return response.status(401).json({
+          success: false,
+          message: "You are blocked  ! Contact the ADMIN",
+        });
+      }
 
       // Generate JWT token
       const token = JWT.sign({ userId: existingUser._id }, jwtSecret, {
         expiresIn: "1hr",
       });
-      console.log("hello");
+
       // Return success response with JWT token
       response
-
         .status(200)
         .json({ success: true, token, seller: existingUser, type: "seller" });
     } catch (error) {
@@ -187,9 +183,9 @@ const sellerController = {
     try {
       const { name, price, description, features, type, location, role } =
         request.body;
-      console.log(request.body);
+      const userId = request.token.userId;
+      console.log(request.token.userId);
       let productUrl = [];
-      console.log(request.files);
 
       if (request.files) {
         console.log("hey");
@@ -201,6 +197,7 @@ const sellerController = {
       }
 
       const products = new Products({
+        userId,
         name,
         price,
         images: productUrl,
@@ -219,7 +216,10 @@ const sellerController = {
   },
   addLands: async (request, response) => {
     try {
+      console.log("hello");
+      const userId = request.token.userId;
       const { name, price } = request.body;
+      console.log(name);
       let landUrl = [];
 
       if (request.files) {
@@ -232,6 +232,7 @@ const sellerController = {
       }
 
       const lands = new Lands({
+        userId,
         name,
         price,
         images: landUrl,
@@ -239,13 +240,18 @@ const sellerController = {
       await lands.save();
       response.status(201).json({ message: "Product added successfully" });
     } catch (error) {
-      console.error("Error adding product:", error);
+      console.error("Error adding lands", error);
       response.status(500).json({ error: "Internal server error" });
     }
   },
   getAllApartments: async (request, response) => {
+    const userId = request.params.userId;
+    console.log(userId);
+
     try {
-      const list = await Products.find().select("_id name price location");
+      const list = await Products.find({ userId }).select(
+        "_id name price location"
+      );
       if (!list) {
         console.log(error);
       } else {
@@ -270,7 +276,7 @@ const sellerController = {
     }
   },
   getProductDetails: async (request, response) => {
-    console.log("hel");
+    console.log("heloooo");
     const id = request.params.id;
     console.log(id);
     try {
@@ -304,12 +310,17 @@ const sellerController = {
       response.status(500).json({ message: "Internal server error" });
     }
   },
+
   getAllLands: async (request, response) => {
+    const userId = request.params.userId;
     try {
-      const list = await lands.find().select("_id name price location");
+      const list = await lands
+        .find({ userId })
+        .select("_id name price location");
       if (!list) {
         console.log(error);
       } else {
+        console.log(list);
         response.status(200).json(list);
       }
     } catch (error) {
@@ -378,9 +389,58 @@ const sellerController = {
 
       response.status(201).json({ message: "Profile added successfully" });
     } catch (error) {
-      // If there's an error, respond with an error message
       console.error("Error adding profile:", error);
       response.status(500).json({ error: "Failed to add profile" });
+    }
+  },
+  getLandDetails: async (request, response) => {
+    console.log("hel");
+    const id = request.params.id;
+    console.log(id);
+    try {
+      const land = await lands.findById(id);
+      if (!land) {
+        return response.status(404).json({ error: "Product not found" });
+      }
+      response.status(200).json(land);
+    } catch (error) {
+      console.error("Error retrieving product details:", error);
+      response.status(500).json({ error: "Internal server error" });
+    }
+  },
+  deleteLand: async (request, response) => {
+    const id = request.params.id;
+
+    try {
+      await lands.findByIdAndDelete(id);
+      response.status(200).json("Successfully deleted");
+    } catch (error) {
+      console.error("Error deleting apartment:", error);
+      response.status(500).json({ error: "Internal server error" });
+    }
+  },
+  BlockAndUnblock: async (request, response) => {
+    const id = request.params.id;
+    const status = request.body.status; // 'block' or 'unblock'
+
+    try {
+      const updatedSeller = await seller.findByIdAndUpdate(
+        id,
+        { isBlocked: status === "block" ? true : false },
+        { new: true }
+      );
+
+      if (!updatedSeller) {
+        return response.status(404).json({ error: "Seller not found" });
+      }
+
+      response.status(200).json({
+        message: "Seller block status updated successfully",
+        seller: updatedSeller,
+      });
+    } catch (error) {
+      console.error("Error updating seller block status:", error);
+      response.status(500).json({ error: "Internal server error" });
     }
   },
 };

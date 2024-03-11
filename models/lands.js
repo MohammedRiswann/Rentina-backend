@@ -2,6 +2,7 @@ const { default: mongoose, Mongoose } = require("mongoose");
 const { any } = require("../middleware/multer");
 
 const landsSchema = new mongoose.Schema({
+  userId: mongoose.Types.ObjectId,
   name: String,
   price: Number,
   images: {
