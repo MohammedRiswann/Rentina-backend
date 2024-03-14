@@ -183,6 +183,7 @@ const sellerController = {
     try {
       const { name, price, description, features, type, location, role } =
         request.body;
+
       const userId = request.token.userId;
       console.log(request.token.userId);
       let productUrl = [];
@@ -218,8 +219,19 @@ const sellerController = {
     try {
       console.log("hello");
       const userId = request.token.userId;
-      const { name, price } = request.body;
-      console.log(name);
+      const { name, price, description, features, type, location, role } =
+        request.body;
+      if (
+        !name ||
+        !price ||
+        !description ||
+        !features ||
+        !type ||
+        !location ||
+        !role
+      ) {
+        return response.status(400).json({ error: "All fields are required" });
+      }
       let landUrl = [];
 
       if (request.files) {
@@ -236,12 +248,17 @@ const sellerController = {
         name,
         price,
         images: landUrl,
+        description,
+        features,
+        type,
+        location,
+        role,
       });
       await lands.save();
       response.status(201).json({ message: "Product added successfully" });
     } catch (error) {
       console.error("Error adding lands", error);
-      response.status(500).json({ error: "Internal server error" });
+      response.status(500).json({ error: "Internal servero error" });
     }
   },
   getAllApartments: async (request, response) => {

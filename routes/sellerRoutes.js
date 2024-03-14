@@ -25,14 +25,14 @@ router.post("/seller-login", sellerController.Login);
 router.post(
   "/add-products",
   decode,
-  multer.array("files", 7),
+  multer.array("files", 5),
 
   sellerController.addProducts
 );
 router.post(
   "/add-lands",
   decode,
-  multer.array("files", 7),
+  multer.array("files", 5),
   sellerController.addLands
 );
 router.post("/add-profile", decode, sellerController.addProfile);

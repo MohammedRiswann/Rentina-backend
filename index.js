@@ -8,6 +8,7 @@ const userRoutes = require("./routes/userRoutes");
 const sellerRoutes = require("./routes/sellerRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const landRoutes = require("./routes/landRoutes");
+const reviewRoutes = require("./routes/reviewRoutes");
 
 mongoose
   .connect("mongodb://localhost:27017/Rentina")
@@ -27,6 +28,7 @@ app.use("/users", userRoutes);
 app.use("/sellers", sellerRoutes);
 app.use("/admin", adminRoutes);
 app.use("/lands", landRoutes);
+app.use("/reviews", reviewRoutes);
 
 app.listen(port, () => {
   console.log(`server started succesfully in port ${port}`);

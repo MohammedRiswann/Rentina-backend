@@ -4,6 +4,7 @@ require("dotenv").config();
 const JWT = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const Apartment = require("../models/apartments");
+
 const otpSID = process.env.TWILIO_ACCOUNT_SID;
 const token = process.env.TWILIO_AUTH_TOKEN;
 const serviceId = process.env.SERVICE_ID;
@@ -172,7 +173,7 @@ const userController = {
   apartmentDetails: async (request, response) => {
     try {
       const apartmentId = request.params.userId;
-      console.log(apartmentId);
+
       const apartmentDetails = await Apartment.findById(apartmentId);
       response.json(apartmentDetails);
     } catch (error) {
