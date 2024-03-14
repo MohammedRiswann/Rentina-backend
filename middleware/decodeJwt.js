@@ -7,7 +7,7 @@ const decodeSellerId = (request, response, next) => {
     request.token = decodedToken;
     next();
   } catch (err) {
-    return response.status(500).json({ message: "internal server error" });
+    return response.status(500).json({ message: "internal server errors" });
   }
 };
 
