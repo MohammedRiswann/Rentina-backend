@@ -10,6 +10,8 @@ const products = require("../models/apartments");
 const profile = require("../models/seller-profile");
 const { default: mongoose } = require("mongoose");
 const lands = require("../models/lands");
+const paymentListToApprovel = require("../models/approval");
+const Approval = require("../models/approval");
 
 const otpSID = process.env.TWILIO_ACCOUNT_SID;
 const token = process.env.TWILIO_AUTH_TOKEN;
@@ -218,6 +220,7 @@ const sellerController = {
   addLands: async (request, response) => {
     try {
       console.log("hello");
+      console.log(request.token);
       const userId = request.token.userId;
       const { name, price, description, features, type, location, role } =
         request.body;
@@ -254,7 +257,8 @@ const sellerController = {
         location,
         role,
       });
-      await lands.save();
+      const hello = await lands.save();
+      console.log(hello);
       response.status(201).json({ message: "Product added successfully" });
     } catch (error) {
       console.error("Error adding lands", error);
@@ -329,7 +333,9 @@ const sellerController = {
   },
 
   getAllLands: async (request, response) => {
-    const userId = request.params.userId;
+    console.log(request.token);
+    const userId = request.token.userId;
+    console.log(userId);
     try {
       const list = await lands
         .find({ userId })
@@ -458,6 +464,74 @@ const sellerController = {
     } catch (error) {
       console.error("Error updating seller block status:", error);
       response.status(500).json({ error: "Internal server error" });
+    }
+  },
+  getPaymentList: async (request, response) => {
+    try {
+      console.log("hello");
+
+      const id = new mongoose.Types.ObjectId(request.params.id);
+      console.log(id);
+
+      const productDetails = await paymentListToApprovel.aggregate([
+        {
+          $match: {
+            userId: id,
+            isVerified: false,
+          },
+        },
+        {
+          $lookup: {
+            from: "products",
+            localField: "productId",
+            foreignField: "_id",
+            as: "Property",
+          },
+        },
+        {
+          $lookup: {
+            from: "lands",
+            localField: "productId",
+            foreignField: "_id",
+            as: "lands",
+          },
+        },
+      ]);
+
+      console.log(productDetails);
+
+      // Send the product details as a response
+      return response.json({ success: true, productDetails });
+    } catch (error) {
+      console.error("Error fetching payment requests:", error);
+      return response
+        .status(500)
+        .json({ success: false, message: "Internal server error" });
+    }
+  },
+  approvePayment: async (request, response) => {
+    try {
+      console.log(request.params);
+      const id = request.params.id;
+
+      const paymentApproved = await Approval.findByIdAndUpdate(
+        id,
+        { isVerified: true, isPending: false },
+        { new: true }
+      );
+
+      if (paymentApproved) {
+        return response
+          .status(200)
+          .json({ success: true, message: "No such user found" });
+      }
+
+      return response.json(paymentApproved);
+    } catch (error) {
+      console.error(error);
+      return response
+        .status(500)
+        .json({ success: true, message: "Internal server error" });
     }
   },
 };

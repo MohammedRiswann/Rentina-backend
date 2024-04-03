@@ -24,7 +24,6 @@ const upload = multer({
     },
     key: function (request, file, cb) {
       cb(null, Date.now().toString() + "-" + file.originalname);
-      console.log("sudais fu");
     },
   }),
 });

@@ -29,10 +29,11 @@ const reviewController = {
   },
   submitReport: async (request, response) => {
     try {
+      console.log("hello");
       const { reason } = request.body.reportData;
       const { id } = request.body;
       console.log(reason);
-      //   console.log(request.token);
+      console.log(request.body);
       const { userId } = request.token;
       console.log(userId);
 

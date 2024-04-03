@@ -11,8 +11,9 @@ const decode = require("../middleware/decodeJwt");
 router.get("/apartments-list/:id", sellerController.getAllApartments);
 router.get("/apartments-details/:id", sellerController.getProductDetails);
 router.get("/profile", decode, sellerController.getProfile);
-router.get("/lands-list/:id", sellerController.getAllLands);
+router.get("/lands-list/:id", decode, sellerController.getAllLands);
 router.get("/lands-details/:id", sellerController.getLandDetails);
+router.get("/approval-payment/:id", sellerController.getPaymentList);
 
 router.post(
   "/register",
@@ -25,7 +26,7 @@ router.post("/seller-login", sellerController.Login);
 router.post(
   "/add-products",
   decode,
-  multer.array("files", 5),
+  multer.array("files", 1),
 
   sellerController.addProducts
 );
@@ -36,6 +37,8 @@ router.post(
   sellerController.addLands
 );
 router.post("/add-profile", decode, sellerController.addProfile);
+
+router.patch("/approve-Payment/:id", sellerController.approvePayment);
 
 router.delete("/apartments-list/:id", sellerController.deleteApartment);
 router.delete("/lands-delete/:id", sellerController.deleteLand);

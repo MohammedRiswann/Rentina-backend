@@ -4,6 +4,7 @@ require("dotenv").config();
 const JWT = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const Apartment = require("../models/apartments");
+const upload = require("../models/approval");
 
 const otpSID = process.env.TWILIO_ACCOUNT_SID;
 const token = process.env.TWILIO_AUTH_TOKEN;
@@ -178,6 +179,93 @@ const userController = {
       response.json(apartmentDetails);
     } catch (error) {
       console.log(error);
+    }
+  },
+  upload: async (request, response) => {
+    try {
+      console.log(request.token.userId);
+      console.log(request.body.userId);
+      console.log(request.files[0].location);
+
+      if (!request.files) {
+        return response
+          .status(400)
+          .json({ success: false, message: "No file uploaded" });
+      }
+
+      const filePath = request.files[0].location;
+
+      // Find the product with the specified userId
+      const products = await Apartment.findOne({ _id: request.body.userId });
+      console.log(products);
+
+      if (!products) {
+        // If no product found, return an error
+        return response.status(404).json({
+          success: false,
+          message: "Product not found with the specified user ID",
+        });
+      }
+
+      // Get the seller ID from the product
+      const sellerId = products.userId;
+      console.log(sellerId);
+
+      const approval = new upload({
+        userId: sellerId,
+        productId: request.body.userId,
+        images: [filePath],
+      });
+      await approval.save();
+      console.log(approval);
+
+      return response.json({
+        success: true,
+        message: "File uploaded successfully",
+        filePath,
+        approval,
+      });
+    } catch (error) {
+      console.log(error);
+      return response
+        .status(500)
+        .json({ success: false, message: "Internal server error" });
+    }
+  },
+  getPaymentApproved: async (request, response) => {
+    try {
+      const id = request.params.id;
+
+      // Find the document by its ID
+      const details = await upload.findOne({ productId: id });
+
+      console.log(details, "helllo world");
+      return response.json({ success: true, details });
+    } catch (error) {
+      console.error("Error fetching pending home:", error);
+      return response
+        .status(500)
+        .json({ success: false, message: "Internal server error" });
+    }
+  },
+
+  fetchPendingHome: async (request, response) => {
+    try {
+      console.log("hello");
+      console.log(request.params);
+
+      const id = request.params.id;
+
+      // Find the document by its ID
+      const details = await upload.findOne({ productId: id });
+
+      console.log(details);
+      return response.json({ success: true, details });
+    } catch (error) {
+      console.error("Error fetching pending home:", error);
+      return response
+        .status(500)
+        .json({ success: false, message: "Internal server error" });
     }
   },
 };

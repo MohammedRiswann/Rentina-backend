@@ -9,9 +9,10 @@ const sellerRoutes = require("./routes/sellerRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const landRoutes = require("./routes/landRoutes");
 const reviewRoutes = require("./routes/reviewRoutes");
+const wishlistRoutes = require("./routes/wishListRoutes");
 
 mongoose
-  .connect("mongodb://localhost:27017/Rentina")
+  .connect(process.env.ATLAS)
   .then(() => {
     console.log("connected to mongodb");
   })
@@ -29,6 +30,7 @@ app.use("/sellers", sellerRoutes);
 app.use("/admin", adminRoutes);
 app.use("/lands", landRoutes);
 app.use("/reviews", reviewRoutes);
+app.use("/wishlist", wishlistRoutes);
 
 app.listen(port, () => {
   console.log(`server started succesfully in port ${port}`);
